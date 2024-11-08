@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Search App</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js"></script>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Book Search App</h1>
+    <input type="text" id="search-input" placeholder="Search for books...">
+    <button id="search-button">Search</button>
+    <div id="view-toggle">
+      <button id="grid-view-btn">Grid View</button>
+      <button id="list-view-btn">List View</button>
+    </div>
+  </div>
+
+  <div id="search-history"></div>
+
+  <div id="results-container" class="grid-view">
+    <!-- Search results will be dynamically populated here -->
+  </div>
+
+  <div id="book-details">
+    <!-- Detailed book information will appear here -->
+  </div>
+
+  <div id="public-bookshelf">
+    <h2>Public Bookshelf</h2>
+    <div id="bookshelf-content">
+      <!-- Bookshelf items will be dynamically loaded here -->
+    </div>
+  </div>
+
+  <!-- Mustache templates -->
+  <script id="template-search-result" type="x-tmpl-mustache">
+    <div class="book-item" data-id="{{id}}">
+      <h2>{{title}}</h2>
+      <p>Author: {{author}}</p>
+      <img src="{{thumbnail}}" alt="{{title}}">
+    </div>
+  </script>
+
+  <script id="template-book-details" type="x-tmpl-mustache">
+    <div class="book-detail">
+      <h2>{{title}}</h2>
+      <p>Author: {{author}}</p>
+      <p>Publisher: {{publisher}}</p>
+      <p>Published Date: {{publishedDate}}</p>
+      <p>Description: {{description}}</p>
+      <img src="{{thumbnail}}" alt="{{title}}">
+    </div>
+  </script>
+
+  <!-- JavaScript file -->
+  <script src="js/main.js"></script>
+</body>
+</html>
