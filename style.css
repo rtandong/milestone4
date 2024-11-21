@@ -1,0 +1,52 @@
+.results-container.grid-view, .shelf-container.grid-view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+}
+.results-container.grid-view .book, .shelf-container.grid-view .book {
+  flex: 1 1 calc(20% - 20px); /* Five items per row */
+  max-width: 200px;
+  text-align: center;
+}
+
+.results-container.list-view, .shelf-container.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.results-container.list-view .book, .shelf-container.list-view .book {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  max-width: 100%;
+}
+
+.results-container.list-view .book img, .shelf-container.list-view .book img {
+  max-width: 100px;
+  height: auto;
+}
+
+#viewToggle {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+#viewToggle button {
+  margin: 0 5px;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  background-color: #ccc;
+  border-radius: 5px;
+}
+
+#viewToggle button.active {
+  background-color: #007bff;
+  color: white;
+}
