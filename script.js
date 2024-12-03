@@ -1,130 +1,139 @@
-
 $(document).ready(function () {
-  const API_KEY = 'AIzaSyAVhO8H0bVJ0759w9KbAmjfBpube8Jf9F8';
-  const MAX_RESULTS_PER_PAGE = 10;
-  let books = [];
-  let currentPage = 1;
-  let isGridView = true; // Default to Grid View
+    const API_KEY = 'AIzaSyAVhO8H0bVJ0759w9KbAmjfBpube8Jf9F8';
+    const MAX_RESULTS_PER_PAGE = 10;
+    let books = [];
+    let currentPage = 1;
+    let totalPages = 0;
+    let isGridView = true;
 
-  // Search for books
-  function searchBooks(query, page = 1) {
-      const startIndex = (page - 1) * MAX_RESULTS_PER_PAGE;
-      $.getJSON(`https://www.googleapis.com/books/v1/volumes?q=${query}&startIndex=${startIndex}&maxResults=${MAX_RESULTS_PER_PAGE}&key=${API_KEY}`)
-          .done(function (data) {
-              books = data.items || [];
-              displayResults(books);
-          })
-          .fail(function () {
-              $('#results').html('<p>An error occurred while fetching data. Please try again.</p>');
-          });
-  }
+    // Search Books from Google Books API
+    function searchBooks(query, page = 1) {
+        const startIndex = (page - 1) * MAX_RESULTS_PER_PAGE;
+        $.getJSON(`https://www.googleapis.com/books/v1/volumes?q=${query}&startIndex=${startIndex}&maxResults=${MAX_RESULTS_PER_PAGE}&key=${API_KEY}`)
+            .done(function (data) {
+                books = data.items || [];
+                totalPages = Math.ceil(data.totalItems / MAX_RESULTS_PER_PAGE);
+                displayResults(books);
+                setupPagination(data.totalItems, page);
+            })
+            .fail(() => {
+                $('#results').html('<p>An error occurred while fetching data. Please try again.</p>');
+            });
+    }
 
-  // Display results
-  function displayResults(books) {
-      const container = $('#results');
-      container.empty();
-      if (books.length === 0) {
-          container.html('<p>No results found.</p>');
-          return;
-      }
+    // Display Search Results (Grid/List View)
+    function displayResults(books) {
+        const container = $('#results');
+        container.empty().addClass(isGridView ? 'grid-view' : 'list-view');
+        if (books.length === 0) {
+            container.html('<p>No results found.</p>');
+            return;
+        }
+        books.forEach(book => {
+            const title = book.volumeInfo.title || 'No Title Available';
+            const imageUrl = book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.thumbnail : 'placeholder.jpg';
+            container.append(`
+                <div class="book" data-id="${book.id}">
+                    <img src="${imageUrl}" alt="${title}">
+                    <p>${title}</p>
+                </div>
+            `);
+        });
+    }
 
-      books.forEach(book => {
-          const title = book.volumeInfo.title;
-          const imageUrl = book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.thumbnail : 'placeholder.jpg';
-          const bookHtml = `
-              <div class="book" data-id="${book.id}">
-                  <img src="${imageUrl}" alt="${title}">
-                  <p>${title}</p>
-              </div>
-          `;
-          container.append(bookHtml);
-      });
+    // Setup Pagination for Search Results
+    function setupPagination(totalItems, currentPage) {
+        const totalPages = Math.ceil(totalItems / MAX_RESULTS_PER_PAGE);
+        $('#pagination').empty();
+        for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+            $('#pagination').append(`
+                <button class="page-link" data-page="${i}">${i}</button>
+            `);
+        }
+        $('.page-link').removeClass('active');
+        $(`.page-link[data-page="${currentPage}"]`).addClass('active');
+    }
 
-      // Apply current view
-      container.removeClass('grid-view list-view').addClass(isGridView ? 'grid-view' : 'list-view');
-  }
+    // Switch between Grid and List View
+    $('#viewToggle button').click(function () {
+        $('#viewToggle button').removeClass('active');
+        $(this).addClass('active');
+        isGridView = $(this).attr('id') === 'gridView';
+        $('#results').removeClass('grid-view list-view').addClass(isGridView ? 'grid-view' : 'list-view');
+    });
 
-  // Event listener for the search button
-  $('#searchButton').click(function () {
-      const query = $('#searchTerm').val().trim();
-      if (query) {
-          searchBooks(query);
-      } else {
-          alert('Enter a search term');
-      }
-  });
+    // Display Book Details
+    function displayBookDetails(book) {
+        const title = book.volumeInfo.title || 'No Title';
+        const description = book.volumeInfo.description || 'No description available.';
+        const imageUrl = book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.thumbnail : 'placeholder.jpg';
+        $('#bookDetails .details-content').html(`
+            <h3>${title}</h3>
+            <p>${description}</p>
+            <img src="${imageUrl}" alt="${title}">
+        `);
+        $('#searchPage').addClass('hidden');
+        $('#bookDetails').removeClass('hidden');
+    }
 
-  // Toggle between Grid View and List View
-  $('#viewToggle button').click(function () {
-      $('#viewToggle button').removeClass('active');
-      $(this).addClass('active');
+    // Event listener for book clicks to show details
+    $('#results').on('click', '.book', function () {
+        const bookId = $(this).data('id');
+        const book = books.find(b => b.id === bookId);
+        if (book) displayBookDetails(book);
+    });
 
-      isGridView = $(this).attr('id') === 'gridView';
-      $('#results').removeClass('grid-view list-view').addClass(isGridView ? 'grid-view' : 'list-view');
-  });
+    // Return to Search Page
+    $('#homeButton').click(function () {
+        $('#bookDetails').addClass('hidden');
+        $('#searchPage').removeClass('hidden');
+    });
 
-  // Event listener for book clicks to show details
-  $('#results').on('click', '.book', function () {
-      const bookId = $(this).data('id');
-      const book = books.find(b => b.id === bookId);
-      displayBookDetails(book);
-  });
-
-  function displayBookDetails(book) {
-      const details = `
-          <h3>${book.volumeInfo.title}</h3>
-          <p>${book.volumeInfo.description || 'No description available.'}</p>
-          <img src="${book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.thumbnail : 'placeholder.jpg'}" alt="${book.volumeInfo.title}">
-      `;
-      $('#bookDetails .details-content').html(details);
-      $('#bookDetails').removeClass('hidden');
-      $('#searchPage').addClass('hidden');
-  }
-
-  $('#backToSearch').click(function () {
-      $('#bookDetails').addClass('hidden');
-      $('#searchPage').removeClass('hidden');
-  });
-
-
+    // Fetch Bookshelf Data
     function displayBookshelf() {
-      fetch(`https://www.googleapis.com/books/v1/users/111513666397003909535/bookshelves/1002/volumes?key=${API_KEY}`)
-          .then(response => response.json())
-          .then(data => {
-              bookshelfBooks = data.items || [];
-              $('#bookshelf').empty();
-              if (bookshelfBooks.length === 0) {
-                  $('#bookshelf').html('<p>No books found in the bookshelf.</p>');
-                  return;
-              }
-              bookshelfBooks.forEach(book => {
-                  const title = book.volumeInfo.title;
-                  const imageUrl = book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.thumbnail : 'placeholder.jpg';
-                  $('#bookshelf').append(`
-                      <div class="book" data-id="${book.id}">
-                          <img src="${imageUrl}" alt="${title}">
-                          <p>${title}</p>
-                      </div>
-                  `);
-              });
-          })
-          .catch(error => console.error('Error fetching bookshelf data:', error));
-  }
+        $.getJSON(`https://www.googleapis.com/books/v1/users/111513666397003909535/bookshelves/1002/volumes?key=${API_KEY}`)
+            .done(data => {
+                const bookshelfBooks = data.items || [];
+                const container = $('#bookshelf');
+                container.empty();
+                if (bookshelfBooks.length === 0) {
+                    container.html('<p>No books found in your bookshelf.</p>');
+                    return;
+                }
+                bookshelfBooks.forEach(book => {
+                    const title = book.volumeInfo.title;
+                    const imageUrl = book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.thumbnail : 'placeholder.jpg';
+                    container.append(`
+                        <div class="book">
+                            <img src="${imageUrl}" alt="${title}">
+                            <p>${title}</p>
+                        </div>
+                    `);
+                });
+            })
+            .fail(() => {
+                $('#bookshelf').html('<p>Error fetching bookshelf data.</p>');
+            });
+    }
 
-  $('#homeButton').click(function () {
-    $('#searchPage').removeClass('hidden');
-    $('#bookshelfPage').addClass('hidden');
-    $('#bookDetails').addClass('hidden');
+    // Event Listeners for Buttons and Pagination
+    $('#searchButton').click(function () {
+        const query = $('#searchTerm').val().trim();
+        if (query) searchBooks(query);
+    });
+
+    $('#pagination').on('click', '.page-link', function () {
+        const query = $('#searchTerm').val().trim();
+        currentPage = $(this).data('page');
+        searchBooks(query, currentPage);
+    });
+
+    // Show Bookshelf when Bookshelf Button is clicked
+    $('#bookshelfButton').click(function () {
+        displayBookshelf();
+    });
+
+    // Default function call to display bookshelf
+    displayBookshelf();
 });
-
-
-  ('#bookshelfButton').click(function () {
-    $('#searchPage').addClass('hidden');
-    $('#bookshelfPage').removeClass('hidden');
-    $('#bookDetails').addClass('hidden');
-});
-
-displayBookshelf();
-});
-
 
